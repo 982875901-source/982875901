@@ -5,27 +5,144 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>手机样机生成器</title>
     <style>
-        *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,Microsoft YaHei,sans-serif}
-        body{background:#f5f7fa;display:flex;height:100vh;overflow:hidden}
-        .sidebar{width:280px;background:#fff;border-right:1px solid #e5e7eb;display:flex;flex-direction:column}
-        .tab-bar{display:flex;gap:8px;padding:12px;border-bottom:1px solid #e5e7eb;overflow-x:auto}
-        .tab{padding:8px 14px;border:none;border-radius:8px;background:#f3f4f6;color:#4b5563;cursor:pointer;font-size:14px}
-        .tab.active{background:#0071e3;color:#fff}
-        .template-list{flex:1;overflow-y:auto;padding:10px;display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-        .template-item{border-radius:10px;overflow:hidden;cursor:pointer;border:2px solid transparent}
-        .template-item.active{border-color:#0071e3}
-        .template-item img{width:100%;height:100%;object-fit:cover;display:block}
-        .preview-area{flex:1;display:flex;align-items:center;justify-content:center;padding:20px;background:#f5f7fa}
-        #canvas{border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,0.1);max-width:95%;max-height:95%;background:#fff}
-        .panel{width:320px;background:#fff;border-left:1px solid #e5e7eb;padding:24px;display:flex;flex-direction:column;gap:16px}
-        .btn{padding:12px 16px;border:none;border-radius:10px;font-size:15px;cursor:pointer}
-        .btn-primary{background:#0071e3;color:#fff}
-        .btn-success{background:#34c759;color:#fff}
-        .btn-warning{background:#ff9500;color:#fff}
-        .btn-gray{background:#8e8e93;color:#fff}
-        .section{display:flex;flex-direction:column;gap:8px}
-        .section label{font-size:14px;color:#333}
-        input[type="color"]{width:100%;height:40px;border-radius:8px;border:1px solid #ddd}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+        body {
+            background: #f5f7fa;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 左侧模板栏 */
+        .sidebar {
+            width: 280px;
+            background: #fff;
+            border-right: 1px solid #eee;
+            display: flex;
+            flex-direction: column;
+        }
+        .tab-bar {
+            display: flex;
+            gap: 8px;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            overflow-x: auto;
+        }
+        .tab {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 8px;
+            background: #f3f4f6;
+            color: #4b5563;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .tab.active {
+            background: #0071e3;
+            color: #fff;
+        }
+        .template-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        .template-item {
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid transparent;
+            cursor: pointer;
+            position: relative;
+            aspect-ratio: 3 / 4;
+        }
+        .template-item.active {
+            border-color: #0071e3;
+        }
+        .template-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* 中间预览区 */
+        .preview-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: #f5f7fa;
+        }
+        #canvas {
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            max-width: 90%;
+            max-height: 90%;
+            background: #fff;
+        }
+
+        /* 右侧控制面板 */
+        .control-panel {
+            width: 320px;
+            background: #fff;
+            border-left: 1px solid #eee;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .btn {
+            padding: 12px 16px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+        .btn-primary {
+            background: #0071e3;
+            color: #fff;
+        }
+        .btn-gray {
+            background: #8e8e93;
+            color: #fff;
+        }
+        .btn-success {
+            background: #34c759;
+            color: #fff;
+        }
+        .btn-warning {
+            background: #ff9500;
+            color: #fff;
+        }
+        .section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .section label {
+            font-size: 14px;
+            color: #333;
+        }
+        input[type="color"] {
+            width: 100%;
+            height: 40px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -44,123 +161,269 @@
     <canvas id="canvas"></canvas>
 </div>
 
-<div class="panel">
+<div class="control-panel">
     <h3 style="margin-bottom:8px">手机样机生成器</h3>
 
     <div class="section">
         <label>上传壁纸</label>
-        <button class="btn btn-primary" id="uploadBg">选择壁纸图片</button>
+        <button class="btn btn-primary" id="uploadBgBtn">选择壁纸图片</button>
         <input type="file" id="bgInput" accept="image/*" style="display:none">
     </div>
 
     <div class="section">
         <label>上传自定义手机模板</label>
-        <button class="btn btn-gray" id="uploadTemplate">上传模板</button>
-        <input type="file" id="tplInput" accept="image/*" style="display:none">
+        <button class="btn btn-gray" id="uploadTemplateBtn">上传模板</button>
+        <input type="file" id="templateInput" accept="image/*" style="display:none">
     </div>
 
     <div class="section">
         <label>背景颜色</label>
-        <input type="color" id="bgColor" value="#f5f7fa">
+        <input type="color" id="bgColorInput" value="#f5f7fa">
     </div>
 
-    <button class="btn btn-success" id="save4k">下载 3000×4000 竖版</button>
-    <button class="btn btn-warning" id="saveSquare">下载 3000×3000 方版</button>
+    <button class="btn btn-success" id="download4000Btn">下载 3000×4000 竖版</button>
+    <button class="btn btn-warning" id="download3000Btn">下载 3000×3000 方版</button>
 </div>
 
 <script>
+// 元素获取
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const templateList = document.getElementById('templateList');
 const tabs = document.querySelectorAll('.tab');
+const uploadBgBtn = document.getElementById('uploadBgBtn');
+const bgInput = document.getElementById('bgInput');
+const uploadTemplateBtn = document.getElementById('uploadTemplateBtn');
+const templateInput = document.getElementById('templateInput');
+const bgColorInput = document.getElementById('bgColorInput');
+const download4000Btn = document.getElementById('download4000Btn');
+const download3000Btn = document.getElementById('download3000Btn');
 
-let bgImage = null;
-let templates = JSON.parse(localStorage.getItem('mockupTemplates')) || [];
-let selectedId = localStorage.getItem('selectedMockupId') || null;
+// 全局数据
+let wallpaperImage = null;
+let customTemplates = [];
+let selectedTemplateId = null;
+let bgColor = '#f5f7fa';
 
-function saveTemplates(){localStorage.setItem('mockupTemplates',JSON.stringify(templates))}
-function selectId(id){selectedId=id;localStorage.setItem('selectedMockupId',id)}
+// 本地存储键
+const STORAGE_KEY = 'mockup_data_v2';
 
-function render(tab){
-    templateList.innerHTML='';
-    const list=templates.filter(t=>t.tab===tab);
-    list.forEach(t=>{
-        const el=document.createElement('div');
-        el.className='template-item'+(t.id===selectedId?' active':'');
-        el.innerHTML=`<img src="${t.url}">`;
-        el.onclick=()=>{selectId(t.id);render(tab);draw(4000)};
-        templateList.appendChild(el);
-    });
-    if(list.length&&!selectedId){selectId(list[0].id);draw(4000)}
-}
+// 1. 初始化：加载本地数据
+function init() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+        try {
+            const data = JSON.parse(saved);
+            customTemplates = data.templates || [];
+            selectedTemplateId = data.selectedId || null;
+            bgColor = data.bgColor || '#f5f7fa';
+            bgColorInput.value = bgColor;
 
-tabs.forEach(t=>{
-    t.onclick=()=>{
-        tabs.forEach(x=>x.classList.remove('active'));
-        t.classList.add('active');
-        render(t.dataset.target);
+            // 恢复模板图片
+            customTemplates.forEach(tpl => {
+                tpl.img = new Image();
+                tpl.img.src = tpl.dataUrl;
+            });
+
+            // 恢复壁纸
+            if (data.lastWallpaper) {
+                wallpaperImage = new Image();
+                wallpaperImage.onload = () => {
+                    renderTemplates('phone');
+                    drawPreview(4000);
+                };
+                wallpaperImage.src = data.lastWallpaper;
+            } else {
+                renderTemplates('phone');
+            }
+        } catch (e) {
+            console.error('加载本地数据失败', e);
+            customTemplates = [];
+            renderTemplates('phone');
+        }
+    } else {
+        renderTemplates('phone');
     }
-})
+}
 
-document.getElementById('uploadBg').onclick=()=>document.getElementById('bgInput').click();
-document.getElementById('bgInput').onchange=e=>{
-    const f=e.target.files[0];if(!f)return;
-    const r=new FileReader();
-    r.onload=ev=>{
-        const img=new Image();
-        img.onload=()=>{bgImage=img;localStorage.setItem('lastBg',img.src);draw(4000)};
-        img.src=ev.target.result;
+// 2. 保存数据到本地
+function saveToStorage() {
+    const data = {
+        templates: customTemplates.map(t => ({
+            id: t.id,
+            tab: t.tab,
+            dataUrl: t.dataUrl
+        })),
+        selectedId: selectedTemplateId,
+        bgColor: bgColor,
+        lastWallpaper: wallpaperImage ? wallpaperImage.src : null
     };
-    r.readAsDataURL(f);
-};
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
 
-document.getElementById('uploadTemplate').onclick=()=>document.getElementById('tplInput').click();
-document.getElementById('tplInput').onchange=e=>{
-    const f=e.target.files[0];if(!f)return;
-    const r=new FileReader();
-    r.onload=ev=>{
-        const img=new Image();
-        img.onload=()=>{
-            const item={id:'t'+Date.now(),tab:'phone',url:ev.target.result,img:img};
-            templates.push(item);saveTemplates();render('phone');
+// 3. 渲染左侧模板列表
+function renderTemplates(tab) {
+    templateList.innerHTML = '';
+    const list = customTemplates.filter(t => t.tab === tab);
+
+    list.forEach(tpl => {
+        const div = document.createElement('div');
+        div.className = 'template-item' + (tpl.id === selectedTemplateId ? ' active' : '');
+        div.innerHTML = `<img src="${tpl.dataUrl}" alt="模板">`;
+        div.onclick = () => {
+            document.querySelectorAll('.template-item').forEach(el => el.classList.remove('active'));
+            div.classList.add('active');
+            selectedTemplateId = tpl.id;
+            saveToStorage();
+            drawPreview(4000);
         };
-        img.src=ev.target.result;
+        templateList.appendChild(div);
+    });
+
+    // 自动选中第一个模板
+    if (list.length > 0 && !selectedTemplateId) {
+        selectedTemplateId = list[0].id;
+        saveToStorage();
+        drawPreview(4000);
+    }
+}
+
+// 4. 核心绘制：不变形套图
+function drawPreview(height) {
+    const tpl = customTemplates.find(t => t.id === selectedTemplateId);
+    if (!tpl) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        return;
+    }
+
+    // 设置画布尺寸
+    const canvasWidth = 3000;
+    const canvasHeight = height;
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+
+    // 填充背景色
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+    // 绘制模板
+    ctx.drawImage(tpl.img, 0, 0, canvasWidth, canvasHeight);
+
+    // 绘制壁纸（等比例不变形）
+    if (wallpaperImage) {
+        // 手机屏幕区域（可微调）
+        const screenX = 300;
+        const screenY = 250;
+        const screenW = 2400;
+        const screenH = 3500;
+
+        // 等比例缩放壁纸，居中显示
+        const imgRatio = wallpaperImage.width / wallpaperImage.height;
+        const screenRatio = screenW / screenH;
+        let drawWidth, drawHeight, drawX, drawY;
+
+        if (imgRatio > screenRatio) {
+            // 壁纸更宽，按高度适配
+            drawHeight = screenH;
+            drawWidth = drawHeight * imgRatio;
+            drawX = screenX - (drawWidth - screenW) / 2;
+            drawY = screenY;
+        } else {
+            // 壁纸更高，按宽度适配
+            drawWidth = screenW;
+            drawHeight = drawWidth / imgRatio;
+            drawX = screenX;
+            drawY = screenY - (drawHeight - screenH) / 2;
+        }
+
+        ctx.drawImage(wallpaperImage, drawX, drawY, drawWidth, drawHeight);
+    }
+}
+
+// 5. 事件绑定
+// 标签切换
+tabs.forEach(tab => {
+    tab.onclick = () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        renderTemplates(tab.dataset.target);
     };
-    r.readAsDataURL(f);
+});
+
+// 上传壁纸
+uploadBgBtn.onclick = () => bgInput.click();
+bgInput.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        wallpaperImage = new Image();
+        wallpaperImage.onload = () => {
+            saveToStorage();
+            drawPreview(4000);
+        };
+        wallpaperImage.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
 };
 
-function draw(h){
-    const t=templates.find(x=>x.id===selectedId);if(!t)return;
-    canvas.width=3000;canvas.height=h;
-    ctx.clearRect(0,0,3000,h);
-    ctx.drawImage(t.img,0,0,3000,h);
-    if(!bgImage)return;
+// 上传自定义模板
+uploadTemplateBtn.onclick = () => templateInput.click();
+templateInput.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        const img = new Image();
+        img.onload = () => {
+            const newTpl = {
+                id: 'tpl_' + Date.now(),
+                tab: 'phone',
+                dataUrl: ev.target.result,
+                img: img
+            };
+            customTemplates.push(newTpl);
+            saveToStorage();
+            renderTemplates('phone');
+            selectedTemplateId = newTpl.id;
+            drawPreview(4000);
+        };
+        img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+};
 
-    const screen={x:300,y:250,w:2400,h:3500};
-    const ir=bgImage.width/bgImage.height;
-    const tr=screen.w/screen.h;
-    let w,h;
-    if(ir>tr){h=screen.h;w=h*ir}else{w=screen.w;h=w/ir}
-    const x=screen.x+(screen.w-w)/2;
-    const y=screen.y+(screen.h-h)/2;
-    ctx.drawImage(bgImage,x,y,w,h);
-}
+// 背景色变化
+bgColorInput.onchange = (e) => {
+    bgColor = e.target.value;
+    saveToStorage();
+    drawPreview(4000);
+};
 
-document.getElementById('save4k').onclick=()=>{draw(4000);setTimeout(()=>{
-    const a=document.createElement('a');a.download='手机样机_3000x4000.png';
-    a.href=canvas.toDataURL('image/png');a.click();
-},300)}
+// 下载竖版 3000×4000
+download4000Btn.onclick = () => {
+    drawPreview(4000);
+    setTimeout(() => {
+        const link = document.createElement('a');
+        link.download = '样机_3000x4000.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    }, 200);
+};
 
-document.getElementById('saveSquare').onclick=()=>{draw(3000);setTimeout(()=>{
-    const a=document.createElement('a');a.download='手机样机_3000x3000.png';
-    a.href=canvas.toDataURL('image/png');a.click();
-},300)}
+// 下载方版 3000×3000
+download3000Btn.onclick = () => {
+    drawPreview(3000);
+    setTimeout(() => {
+        const link = document.createElement('a');
+        link.download = '样机_3000x3000.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    }, 200);
+};
 
-window.onload=()=>{
-    const last=localStorage.getItem('lastBg');
-    if(last){const img=new Image();img.onload=()=>{bgImage=img;render('phone')};img.src=last}
-    else render('phone');
-}
+// 启动
+init();
 </script>
 </body>
 </html>
