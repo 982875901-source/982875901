@@ -5,122 +5,236 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>壁纸样机生成器</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
-        body { background: #f0f2f5; padding: 20px; }
-        .container { max-width: 1200px; margin: 0 auto; display: flex; gap: 20px; flex-wrap: wrap; }
-        .panel { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); flex: 1; min-width: 300px; }
-        .preview-panel { flex: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        h2 { margin-bottom: 20px; color: #333; }
-        .upload-btn { background: #007bff; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 16px; margin-bottom: 20px; }
-        .upload-btn:hover { background: #0056b3; }
-        .device-select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 20px; }
-        #previewCanvas { border: 1px solid #eee; border-radius: 20px; background: #fff; max-width: 100%; }
-        .download-btn { background: #28a745; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 16px; margin-top: 20px; }
-        .download-btn:hover { background: #218838; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft Yahei", sans-serif; }
+        body { background: #f5f7fa; display: flex; height: 100vh; overflow: hidden; }
+
+        /* 左侧模板栏 */
+        .sidebar { width: 280px; background: #fff; border-right: 1px solid #eee; display: flex; flex-direction: column; }
+        .tab-nav { display: flex; border-bottom: 1px solid #eee; padding: 10px; gap: 8px; overflow-x: auto; }
+        .tab-btn { padding: 8px 16px; border: none; background: none; font-size: 15px; cursor: pointer; color: #666; border-radius: 6px; }
+        .tab-btn.active { color: #009688; background: #e8f5f3; font-weight: bold; }
+        .template-list { flex: 1; overflow-y: auto; padding: 12px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .template-item { border-radius: 8px; overflow: hidden; border: 2px solid transparent; cursor: pointer; position: relative; }
+        .template-item.active { border-color: #009688; }
+        .template-item img { width: 100%; display: block; }
+        .template-item .label { position: absolute; top: 4px; right: 4px; background: #4caf50; color: white; font-size: 10px; padding: 2px 6px; border-radius: 2px; }
+
+        /* 中间预览区 */
+        .preview-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        #previewCanvas { border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.15); max-width: 90%; max-height: 70%; }
+
+        /* 右侧控制面板 */
+        .control-panel { width: 320px; background: #fff; border-left: 1px solid #eee; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+        .btn { padding: 12px; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; }
+        .btn-primary { background: #009688; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-gray { background: #6c757d; color: white; }
+        .color-input { width: 100%; height: 40px; border-radius: 6px; border: 1px solid #ddd; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="panel control-panel">
-            <h2>壁纸样机生成器</h2>
-            <button class="upload-btn" id="uploadBtn">上传壁纸</button>
-            <input type="file" id="imageUpload" accept="image/*" style="display: none;">
-            
-            <label for="deviceSelect">选择设备：</label>
-            <select id="deviceSelect" class="device-select">
-                <option value="iphone15">iPhone 15</option>
-                <option value="ipad">iPad</option>
-                <option value="android">安卓手机</option>
-            </select>
-        </div>
-        
-        <div class="panel preview-panel">
-            <canvas id="previewCanvas" width="300" height="600"></canvas>
-            <button class="download-btn" id="downloadBtn">下载样机图</button>
-        </div>
+
+<!-- 左侧模板列表 -->
+<div class="sidebar">
+    <div class="tab-nav">
+        <button class="tab-btn active" data-tab="phone">手机</button>
+        <button class="tab-btn" data-tab="pad">平板</button>
+        <button class="tab-btn" data-tab="pc">电脑</button>
+        <button class="tab-btn" data-tab="group">组合</button>
+    </div>
+    <div class="template-list" id="templateList"></div>
+</div>
+
+<!-- 中间预览区 -->
+<div class="preview-area">
+    <canvas id="previewCanvas"></canvas>
+</div>
+
+<!-- 右侧控制面板 -->
+<div class="control-panel">
+    <h3>壁纸样机生成器</h3>
+    <button class="btn btn-primary" id="uploadBtn">上传壁纸图片</button>
+    <input type="file" id="imageUpload" accept="image/*" style="display: none;">
+
+    <div>
+        <label>背景颜色</label>
+        <input type="color" id="bgColor" value="#f5f7fa" class="color-input">
     </div>
 
-    <script>
-        const uploadBtn = document.getElementById('uploadBtn');
-        const imageUpload = document.getElementById('imageUpload');
-        const deviceSelect = document.getElementById('deviceSelect');
-        const previewCanvas = document.getElementById('previewCanvas');
-        const downloadBtn = document.getElementById('downloadBtn');
-        const ctx = previewCanvas.getContext('2d');
+    <button class="btn btn-gray" id="uploadCustomBtn">上传自定义设备外壳</button>
+    <input type="file" id="customUpload" accept="image/*" style="display: none;">
 
-        let uploadedImage = null;
-        const deviceTemplates = {
-            iphone15: { width: 300, height: 600, screenWidth: 250, screenHeight: 500, screenX: 25, screenY: 50, color: '#111' },
-            ipad: { width: 400, height: 550, screenWidth: 360, screenHeight: 480, screenX: 20, screenY: 35, color: '#111' },
-            android: { width: 300, height: 620, screenWidth: 260, screenHeight: 540, screenX: 20, screenY: 40, color: '#111' }
-        };
+    <button class="btn btn-success" id="downloadBtn">下载 3000×4000 高清图</button>
+</div>
 
-        uploadBtn.addEventListener('click', () => imageUpload.click());
-        imageUpload.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const img = new Image();
-                img.onload = () => {
-                    uploadedImage = img;
-                    drawPreview();
-                };
-                img.src = event.target.result;
-            };
-            reader.readAsDataURL(file);
-        });
+<script>
+const uploadBtn = document.getElementById('uploadBtn');
+const imageUpload = document.getElementById('imageUpload');
+const previewCanvas = document.getElementById('previewCanvas');
+const downloadBtn = document.getElementById('downloadBtn');
+const bgColor = document.getElementById('bgColor');
+const uploadCustomBtn = document.getElementById('uploadCustomBtn');
+const customUpload = document.getElementById('customUpload');
+const templateList = document.getElementById('templateList');
+const tabBtns = document.querySelectorAll('.tab-btn');
+const ctx = previewCanvas.getContext('2d');
 
-        deviceSelect.addEventListener('change', drawPreview);
+let uploadedImage = null;
+let customDeviceImage = null;
+let selectedTemplate = null;
 
-        function drawPreview() {
-            const device = deviceTemplates[deviceSelect.value];
-            previewCanvas.width = device.width;
-            previewCanvas.height = device.height;
+// 模板数据（对应不同分类）
+const templates = {
+    phone: [
+        { id: 'iphone15', name: 'iPhone 15', type: 'phone' },
+        { id: 'iphone16', name: 'iPhone 16', type: 'phone' },
+        { id: 'iphone14', name: 'iPhone 14', type: 'phone' },
+        { id: 's24', name: '三星 S24', type: 'phone' },
+        { id: 'xiaomi14', name: '小米 14', type: 'phone' },
+        { id: 'huawei', name: '华为 Mate60', type: 'phone' },
+    ],
+    pad: [
+        { id: 'ipad', name: 'iPad', type: 'pad' },
+    ],
+    pc: [
+        { id: 'macbook', name: 'MacBook', type: 'pc' },
+        { id: 'laptop', name: '笔记本', type: 'pc' },
+    ],
+    group: [
+        { id: 'group', name: '手机+平板+电脑', type: 'group' },
+    ]
+};
 
-            // Draw device frame
-            ctx.fillStyle = device.color;
-            ctx.fillRect(0, 0, device.width, device.height);
-            ctx.fillStyle = '#000';
-            ctx.fillRect(device.screenX, device.screenY, device.screenWidth, device.screenHeight);
+// 设备尺寸数据
+const deviceTemplates = {
+    iphone15:    { w:3000, h:4000, sw:2400, sh:3500, sx:300, sy:250, color:"#111" },
+    iphone16:    { w:3000, h:4000, sw:2500, sh:3600, sx:250, sy:200, color:"#111" },
+    iphone14:    { w:3000, h:4000, sw:2400, sh:3400, sx:300, sy:300, color:"#111" },
+    s24:         { w:3000, h:4000, sw:2450, sh:3550, sx:275, sy:225, color:"#222" },
+    xiaomi14:    { w:3000, h:4000, sw:2450, sh:3550, sx:275, sy:225, color:"#222" },
+    huawei:      { w:3000, h:4000, sw:2450, sh:3550, sx:275, sy:225, color:"#222" },
+    ipad:        { w:3000, h:4000, sw:2600, sh:3200, sx:200, sy:400, color:"#111" },
+    macbook:     { w:3000, h:4000, sw:2700, sh:1700, sx:150, sy:900, color:"#111" },
+    laptop:      { w:3000, h:4000, sw:2600, sh:1800, sx:200, sy:800, color:"#222" },
+    group:       { w:3000, h:4000, color:"#111" }
+};
 
-            if (uploadedImage) {
-                const imgAspect = uploadedImage.width / uploadedImage.height;
-                const screenAspect = device.screenWidth / device.screenHeight;
-                let drawWidth, drawHeight, drawX, drawY;
-
-                if (imgAspect > screenAspect) {
-                    drawHeight = device.screenHeight;
-                    drawWidth = drawHeight * imgAspect;
-                    drawX = device.screenX - (drawWidth - device.screenWidth) / 2;
-                    drawY = device.screenY;
-                } else {
-                    drawWidth = device.screenWidth;
-                    drawHeight = drawWidth / imgAspect;
-                    drawX = device.screenX;
-                    drawY = device.screenY - (drawHeight - device.screenHeight) / 2;
-                }
-
-                ctx.drawImage(uploadedImage, drawX, drawY, drawWidth, drawHeight);
-            }
-
-            // Draw notch (iPhone example)
-            if (deviceSelect.value === 'iphone15') {
-                ctx.fillStyle = '#000';
-                ctx.beginPath();
-                ctx.ellipse(device.width/2, 25, 40, 10, 0, 0, Math.PI*2);
-                ctx.fill();
-            }
+// 渲染模板列表
+function renderTemplates(tab) {
+    templateList.innerHTML = '';
+    templates[tab].forEach((t, index) => {
+        const div = document.createElement('div');
+        div.className = 'template-item';
+        if (index === 0 && !selectedTemplate) {
+            div.classList.add('active');
+            selectedTemplate = t.id;
+        } else if (selectedTemplate === t.id) {
+            div.classList.add('active');
         }
+        div.innerHTML = `
+            <img src="https://picsum.photos/200/300?random=${t.id}" alt="${t.name}">
+            <div class="label">新</div>
+        `;
+        div.onclick = () => {
+            document.querySelectorAll('.template-item').forEach(i => i.classList.remove('active'));
+            div.classList.add('active');
+            selectedTemplate = t.id;
+            draw();
+        };
+        templateList.appendChild(div);
+    });
+    draw();
+}
 
-        downloadBtn.addEventListener('click', () => {
-            const link = document.createElement('a');
-            link.download = 'wallpaper-mockup.png';
-            link.href = previewCanvas.toDataURL('image/png');
-            link.click();
-        });
+// 标签切换
+tabBtns.forEach(btn => {
+    btn.onclick = () => {
+        tabBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderTemplates(btn.dataset.tab);
+    };
+});
 
-        drawPreview();
-    </script>
+// 上传壁纸
+uploadBtn.onclick = () => imageUpload.click();
+imageUpload.onchange = (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = (ev) => {
+        const img = new Image();
+        img.onload = () => { uploadedImage = img; draw(); };
+        img.src = ev.target.result;
+    };
+    r.readAsDataURL(f);
+};
+
+// 上传自定义设备外壳
+uploadCustomBtn.onclick = () => customUpload.click();
+customUpload.onchange = (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = (ev) => {
+        const img = new Image();
+        img.onload = () => { customDeviceImage = img; draw(); };
+        img.src = ev.target.result;
+    };
+    r.readAsDataURL(f);
+};
+
+// 背景色变化
+bgColor.onchange = draw;
+
+// 绘制预览
+function draw() {
+    const d = deviceTemplates[selectedTemplate];
+    previewCanvas.width = 3000;
+    previewCanvas.height = 4000;
+
+    // 背景色
+    ctx.fillStyle = bgColor.value;
+    ctx.fillRect(0, 0, 3000, 4000);
+
+    if (selectedTemplate === "group") {
+        // 组合模板：手机+平板+电脑
+        ctx.fillStyle = "#111";
+        ctx.fillRect(500, 2500, 800, 1200);
+        ctx.fillRect(1100, 1800, 1000, 700);
+        ctx.fillRect(2100, 1200, 800, 1200);
+        if (uploadedImage) {
+            ctx.drawImage(uploadedImage, 500, 2500, 800, 1200);
+            ctx.drawImage(uploadedImage, 1100, 1800, 1000, 700);
+            ctx.drawImage(uploadedImage, 2100, 1200, 800, 1200);
+        }
+        return;
+    }
+
+    // 自定义设备外壳优先
+    if (customDeviceImage) {
+        ctx.drawImage(customDeviceImage, 0, 0, 3000, 4000);
+    } else {
+        // 默认设备框架
+        ctx.fillStyle = d.color;
+        ctx.fillRect(0, 0, 3000, 4000);
+    }
+
+    // 绘制壁纸
+    if (uploadedImage) {
+        ctx.drawImage(uploadedImage, d.sx, d.sy, d.sw, d.sh);
+    }
+}
+
+// 下载高清图
+downloadBtn.onclick = () => {
+    const a = document.createElement('a');
+    a.download = "高清样机.png";
+    a.href = previewCanvas.toDataURL('image/png');
+    a.click();
+};
+
+// 初始化
+renderTemplates('phone');
+</script>
 </body>
 </html>
