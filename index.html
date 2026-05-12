@@ -3,38 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>壁纸样机生成器</title>
+    <title>双尺寸壁纸样机生成器</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Microsoft Yahei", sans-serif; }
         body { background: #f5f7fa; display: flex; height: 100vh; overflow: hidden; }
 
-        /* 左侧模板栏 */
         .sidebar { width: 280px; background: #fff; border-right: 1px solid #eee; display: flex; flex-direction: column; }
         .tab-nav { display: flex; border-bottom: 1px solid #eee; padding: 10px; gap: 8px; overflow-x: auto; }
         .tab-btn { padding: 8px 16px; border: none; background: none; font-size: 15px; cursor: pointer; color: #666; border-radius: 6px; }
         .tab-btn.active { color: #009688; background: #e8f5f3; font-weight: bold; }
         .template-list { flex: 1; overflow-y: auto; padding: 12px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-        .template-item { border-radius: 8px; overflow: hidden; border: 2px solid transparent; cursor: pointer; position: relative; }
+        .template-item { border-radius: 8px; overflow: hidden; border: 2px solid transparent; cursor: pointer; position: relative; aspect-ratio: 1 / 1; }
         .template-item.active { border-color: #009688; }
-        .template-item img { width: 100%; display: block; }
+        .template-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .template-item .label { position: absolute; top: 4px; right: 4px; background: #4caf50; color: white; font-size: 10px; padding: 2px 6px; border-radius: 2px; }
 
-        /* 中间预览区 */
-        .preview-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        #previewCanvas { border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.15); max-width: 90%; max-height: 70%; }
+        .preview-area { flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px; background: #f5f7fa; }
+        #previewCanvas { border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.15); max-width: 90%; max-height: 90%; background: #fff; }
 
-        /* 右侧控制面板 */
-        .control-panel { width: 320px; background: #fff; border-left: 1px solid #eee; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
-        .btn { padding: 12px; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; }
+        .control-panel { width: 320px; background: #fff; border-left: 1px solid #eee; padding: 24px; display: flex; flex-direction: column; gap: 14px; }
+        .btn { padding: 12px; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; transition: opacity 0.2s; }
+        .btn:hover { opacity: 0.9; }
         .btn-primary { background: #009688; color: white; }
         .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ff9800; color: white; }
         .btn-gray { background: #6c757d; color: white; }
-        .color-input { width: 100%; height: 40px; border-radius: 6px; border: 1px solid #ddd; }
+        .color-input { width: 100%; height: 40px; border-radius: 6px; border: 1px solid #ddd; cursor: pointer; }
+        .control-panel h3 { font-size: 18px; color: #222; margin-bottom: 8px; }
     </style>
 </head>
 <body>
 
-<!-- 左侧模板列表 -->
 <div class="sidebar">
     <div class="tab-nav">
         <button class="tab-btn active" data-tab="phone">手机</button>
@@ -45,108 +44,89 @@
     <div class="template-list" id="templateList"></div>
 </div>
 
-<!-- 中间预览区 -->
 <div class="preview-area">
     <canvas id="previewCanvas"></canvas>
 </div>
 
-<!-- 右侧控制面板 -->
 <div class="control-panel">
     <h3>壁纸样机生成器</h3>
     <button class="btn btn-primary" id="uploadBtn">上传壁纸图片</button>
     <input type="file" id="imageUpload" accept="image/*" style="display: none;">
 
     <div>
-        <label>背景颜色</label>
+        <label style="font-size:14px; color:#666;">背景颜色</label>
         <input type="color" id="bgColor" value="#f5f7fa" class="color-input">
     </div>
 
-    <button class="btn btn-gray" id="uploadCustomBtn">上传自定义设备外壳</button>
-    <input type="file" id="customUpload" accept="image/*" style="display: none;">
+    <button class="btn btn-gray" id="uploadCustomDeviceBtn">上传自定义设备外壳</button>
+    <input type="file" id="customDeviceUpload" accept="image/*" style="display: none;">
 
-    <button class="btn btn-success" id="downloadBtn">下载 3000×4000 高清图</button>
+    <button class="btn btn-gray" id="uploadCustomTemplateBtn">上传自定义模板缩略图</button>
+    <input type="file" id="customTemplateUpload" accept="image/*" style="display: none;">
+
+    <button class="btn btn-success" id="downloadBtn4000">下载 3000×4000 竖版</button>
+    <button class="btn btn-warning" id="downloadBtn3000">下载 3000×3000 方版</button>
 </div>
 
 <script>
 const uploadBtn = document.getElementById('uploadBtn');
 const imageUpload = document.getElementById('imageUpload');
 const previewCanvas = document.getElementById('previewCanvas');
-const downloadBtn = document.getElementById('downloadBtn');
+const downloadBtn4000 = document.getElementById('downloadBtn4000');
+const downloadBtn3000 = document.getElementById('downloadBtn3000');
 const bgColor = document.getElementById('bgColor');
-const uploadCustomBtn = document.getElementById('uploadCustomBtn');
-const customUpload = document.getElementById('customUpload');
+const uploadCustomDeviceBtn = document.getElementById('uploadCustomDeviceBtn');
+const customDeviceUpload = document.getElementById('customDeviceUpload');
+const uploadCustomTemplateBtn = document.getElementById('uploadCustomTemplateBtn');
+const customTemplateUpload = document.getElementById('customTemplateUpload');
 const templateList = document.getElementById('templateList');
 const tabBtns = document.querySelectorAll('.tab-btn');
 const ctx = previewCanvas.getContext('2d');
 
 let uploadedImage = null;
 let customDeviceImage = null;
-let selectedTemplate = null;
+let selectedTemplateId = 'iphone15';
+let customTemplates = [];
 
-// 模板数据（对应不同分类）
-const templates = {
+// 基础模板尺寸
+const baseTemplates = {
     phone: [
-        { id: 'iphone15', name: 'iPhone 15', type: 'phone' },
-        { id: 'iphone16', name: 'iPhone 16', type: 'phone' },
-        { id: 'iphone14', name: 'iPhone 14', type: 'phone' },
-        { id: 's24', name: '三星 S24', type: 'phone' },
-        { id: 'xiaomi14', name: '小米 14', type: 'phone' },
-        { id: 'huawei', name: '华为 Mate60', type: 'phone' },
+        { id: 'iphone15', name: 'iPhone 15', type: 'phone', w:3000, h:4000, sw:2400, sh:3500, sx:300, sy:250, color:"#111" },
+        { id: 'iphone16', name: 'iPhone 16', type: 'phone', w:3000, h:4000, sw:2500, sh:3600, sx:250, sy:200, color:"#111" },
+        { id: 'iphone14', name: 'iPhone 14', type: 'phone', w:3000, h:4000, sw:2400, sh:3400, sx:300, sy:300, color:"#111" },
+        { id: 's24', name: '三星 S24', type: 'phone', w:3000, h:4000, sw:2450, sh:3550, sx:275, sy:225, color:"#222" },
     ],
     pad: [
-        { id: 'ipad', name: 'iPad', type: 'pad' },
+        { id: 'ipad', name: 'iPad', type: 'pad', w:3000, h:4000, sw:2600, sh:3200, sx:200, sy:400, color:"#111" },
     ],
     pc: [
-        { id: 'macbook', name: 'MacBook', type: 'pc' },
-        { id: 'laptop', name: '笔记本', type: 'pc' },
+        { id: 'macbook', name: 'MacBook', type: 'pc', w:3000, h:4000, sw:2700, sh:1700, sx:150, sy:900, color:"#111" },
+        { id: 'laptop', name: '笔记本', type: 'pc', w:3000, h:4000, sw:2600, sh:1800, sx:200, sy:800, color:"#222" },
     ],
     group: [
-        { id: 'group', name: '手机+平板+电脑', type: 'group' },
+        { id: 'group', name: '手机+平板+电脑', type: 'group', w:3000, h:4000, color:"#111" },
     ]
 };
 
-// 设备尺寸数据
-const deviceTemplates = {
-    iphone15:    { w:3000, h:4000, sw:2400, sh:3500, sx:300, sy:250, color:"#111" },
-    iphone16:    { w:3000, h:4000, sw:2500, sh:3600, sx:250, sy:200, color:"#111" },
-    iphone14:    { w:3000, h:4000, sw:2400, sh:3400, sx:300, sy:300, color:"#111" },
-    s24:         { w:3000, h:4000, sw:2450, sh:3550, sx:275, sy:225, color:"#222" },
-    xiaomi14:    { w:3000, h:4000, sw:2450, sh:3550, sx:275, sy:225, color:"#222" },
-    huawei:      { w:3000, h:4000, sw:2450, sh:3550, sx:275, sy:225, color:"#222" },
-    ipad:        { w:3000, h:4000, sw:2600, sh:3200, sx:200, sy:400, color:"#111" },
-    macbook:     { w:3000, h:4000, sw:2700, sh:1700, sx:150, sy:900, color:"#111" },
-    laptop:      { w:3000, h:4000, sw:2600, sh:1800, sx:200, sy:800, color:"#222" },
-    group:       { w:3000, h:4000, color:"#111" }
-};
-
-// 渲染模板列表
 function renderTemplates(tab) {
     templateList.innerHTML = '';
-    templates[tab].forEach((t, index) => {
+    const templates = [...baseTemplates[tab], ...customTemplates.filter(t => t.tab === tab)];
+    templates.forEach(t => {
         const div = document.createElement('div');
-        div.className = 'template-item';
-        if (index === 0 && !selectedTemplate) {
-            div.classList.add('active');
-            selectedTemplate = t.id;
-        } else if (selectedTemplate === t.id) {
-            div.classList.add('active');
-        }
+        div.className = 'template-item' + (selectedTemplateId === t.id ? ' active' : '');
         div.innerHTML = `
-            <img src="https://picsum.photos/200/300?random=${t.id}" alt="${t.name}">
-            <div class="label">新</div>
+            <img src="${t.thumb || 'https://picsum.photos/200/200?random=' + t.id}" alt="${t.name}">
         `;
         div.onclick = () => {
             document.querySelectorAll('.template-item').forEach(i => i.classList.remove('active'));
             div.classList.add('active');
-            selectedTemplate = t.id;
-            draw();
+            selectedTemplateId = t.id;
+            drawPreview(4000);
         };
         templateList.appendChild(div);
     });
-    draw();
 }
 
-// 标签切换
 tabBtns.forEach(btn => {
     btn.onclick = () => {
         tabBtns.forEach(b => b.classList.remove('active'));
@@ -155,86 +135,138 @@ tabBtns.forEach(btn => {
     };
 });
 
-// 上传壁纸
 uploadBtn.onclick = () => imageUpload.click();
-imageUpload.onchange = (e) => {
+imageUpload.onchange = e => {
     const f = e.target.files[0];
     if (!f) return;
     const r = new FileReader();
-    r.onload = (ev) => {
+    r.onload = ev => {
         const img = new Image();
-        img.onload = () => { uploadedImage = img; draw(); };
+        img.onload = () => { uploadedImage = img; drawPreview(4000); };
         img.src = ev.target.result;
     };
     r.readAsDataURL(f);
 };
 
-// 上传自定义设备外壳
-uploadCustomBtn.onclick = () => customUpload.click();
-customUpload.onchange = (e) => {
+uploadCustomDeviceBtn.onclick = () => customDeviceUpload.click();
+customDeviceUpload.onchange = e => {
     const f = e.target.files[0];
     if (!f) return;
     const r = new FileReader();
-    r.onload = (ev) => {
+    r.onload = ev => {
         const img = new Image();
-        img.onload = () => { customDeviceImage = img; draw(); };
+        img.onload = () => { customDeviceImage = img; drawPreview(4000); };
         img.src = ev.target.result;
     };
     r.readAsDataURL(f);
 };
 
-// 背景色变化
-bgColor.onchange = draw;
+uploadCustomTemplateBtn.onclick = () => customTemplateUpload.click();
+customTemplateUpload.onchange = e => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = ev => {
+        const newTemplate = {
+            id: 'custom_' + Date.now(),
+            name: '自定义模板',
+            type: 'phone',
+            tab: 'phone',
+            thumb: ev.target.result,
+            w:3000, h:4000, sw:2400, sh:3500, sx:300, sy:250, color:"#111"
+        };
+        customTemplates.push(newTemplate);
+        renderTemplates('phone');
+        selectedTemplateId = newTemplate.id;
+        drawPreview(4000);
+    };
+    r.readAsDataURL(f);
+};
 
-// 绘制预览
-function draw() {
-    const d = deviceTemplates[selectedTemplate];
-    previewCanvas.width = 3000;
-    previewCanvas.height = 4000;
+bgColor.onchange = () => drawPreview(4000);
 
-    // 背景色
+// 核心绘制：传高度 4000 / 3000 自动适配
+function drawPreview(h) {
+    const allTpl = [...baseTemplates.phone,...baseTemplates.pad,...baseTemplates.pc,...baseTemplates.group,...customTemplates];
+    const t = allTpl.find(x => x.id === selectedTemplateId);
+    if (!t) return;
+
+    const W = 3000;
+    const H = h;
+    previewCanvas.width = W;
+    previewCanvas.height = H;
+
     ctx.fillStyle = bgColor.value;
-    ctx.fillRect(0, 0, 3000, 4000);
+    ctx.fillRect(0,0,W,H);
 
-    if (selectedTemplate === "group") {
-        // 组合模板：手机+平板+电脑
+    if (selectedTemplateId === "group") {
         ctx.fillStyle = "#111";
-        ctx.fillRect(500, 2500, 800, 1200);
-        ctx.fillRect(1100, 1800, 1000, 700);
-        ctx.fillRect(2100, 1200, 800, 1200);
-        if (uploadedImage) {
-            ctx.drawImage(uploadedImage, 500, 2500, 800, 1200);
-            ctx.drawImage(uploadedImage, 1100, 1800, 1000, 700);
-            ctx.drawImage(uploadedImage, 2100, 1200, 800, 1200);
+        ctx.fillRect(500, H*0.65, 800, H*0.32);
+        ctx.fillRect(1100, H*0.45, 1000, H*0.2);
+        ctx.fillRect(2100, H*0.3, 800, H*0.32);
+        if(uploadedImage){
+            drawScaled(uploadedImage,500,H*0.65,800,H*0.32);
+            drawScaled(uploadedImage,1100,H*0.45,1000,H*0.2);
+            drawScaled(uploadedImage,2100,H*0.3,800,H*0.32);
         }
         return;
     }
 
-    // 自定义设备外壳优先
-    if (customDeviceImage) {
-        ctx.drawImage(customDeviceImage, 0, 0, 3000, 4000);
-    } else {
-        // 默认设备框架
-        ctx.fillStyle = d.color;
-        ctx.fillRect(0, 0, 3000, 4000);
+    if(customDeviceImage){
+        ctx.drawImage(customDeviceImage,0,0,W,H);
+    }else{
+        ctx.fillStyle = t.color;
+        ctx.fillRect(0,0,W,H);
     }
 
-    // 绘制壁纸
-    if (uploadedImage) {
-        ctx.drawImage(uploadedImage, d.sx, d.sy, d.sw, d.sh);
+    if(uploadedImage){
+        let scaleRat = H / 4000;
+        let sw = t.sw * scaleRat;
+        let sh = t.sh * scaleRat;
+        let sx = t.sx * scaleRat;
+        let sy = t.sy * scaleRat;
+        drawScaled(uploadedImage, sx, sy, sw, sh);
     }
 }
 
-// 下载高清图
-downloadBtn.onclick = () => {
-    const a = document.createElement('a');
-    a.download = "高清样机.png";
-    a.href = previewCanvas.toDataURL('image/png');
-    a.click();
+// 等比例不变形绘制
+function drawScaled(img, x, y, tw, th) {
+    let ir = img.width / img.height;
+    let tr = tw / th;
+    let w,h,dx,dy;
+    if(ir > tr){
+        h = th; w = h * ir;
+        dx = x - (w - tw)/2; dy = y;
+    }else{
+        w = tw; h = w / ir;
+        dx = x; dy = y - (h - th)/2;
+    }
+    ctx.drawImage(img, dx, dy, w, h);
+}
+
+// 下载两个尺寸
+downloadBtn4000.onclick = () => {
+    drawPreview(4000);
+    setTimeout(()=>{
+        let a = document.createElement('a');
+        a.download = '样机_3000x4000.png';
+        a.href = previewCanvas.toDataURL('image/png');
+        a.click();
+    },200);
 };
 
-// 初始化
+downloadBtn3000.onclick = () => {
+    drawPreview(3000);
+    setTimeout(()=>{
+        let a = document.createElement('a');
+        a.download = '样机_3000x3000.png';
+        a.href = previewCanvas.toDataURL('image/png');
+        a.click();
+    },200);
+};
+
 renderTemplates('phone');
+drawPreview(4000);
 </script>
 </body>
 </html>
